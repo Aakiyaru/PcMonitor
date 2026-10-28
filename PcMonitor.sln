@@ -5,6 +5,8 @@ VisualStudioVersion = 17.14.37824.6
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PcMonitor.Domain", "PcMonitor.Domain\PcMonitor.Domain.csproj", "{FA980BB4-5D1C-47B4-BC87-DEE774CFDEFD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PcMonitor.Application", "PcMonitor.Application\PcMonitor.Application.csproj", "{4F066D16-384E-480D-8530-9E9701131DFE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{FA980BB4-5D1C-47B4-BC87-DEE774CFDEFD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FA980BB4-5D1C-47B4-BC87-DEE774CFDEFD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FA980BB4-5D1C-47B4-BC87-DEE774CFDEFD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F066D16-384E-480D-8530-9E9701131DFE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F066D16-384E-480D-8530-9E9701131DFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F066D16-384E-480D-8530-9E9701131DFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F066D16-384E-480D-8530-9E9701131DFE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
