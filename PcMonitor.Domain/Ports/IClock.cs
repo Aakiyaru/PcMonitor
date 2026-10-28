@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace PcMonitor.Domain.Ports;
 
-namespace PcMonitor.Domain.Ports
+/// <summary>Абстракция времени — позволяет подменять часы в тестах.</summary>
+public interface IClock
 {
-    internal class IClock
-    {
-    }
+    DateTimeOffset UtcNow { get; }
 }

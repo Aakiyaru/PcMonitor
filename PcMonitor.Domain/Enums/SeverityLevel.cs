@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace PcMonitor.Domain.Enums;
 
-namespace PcMonitor.Domain.Enums
+public enum SeverityLevel
 {
-    internal class SeverityLevel
-    {
-    }
+    Info = 0,
+    Warning = 1,
+    Critical = 2
 }

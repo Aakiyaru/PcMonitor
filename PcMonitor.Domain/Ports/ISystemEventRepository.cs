@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using PcMonitor.Domain.Entities;
+using PcMonitor.Domain.ValueObjects;
 
-namespace PcMonitor.Domain.Ports
+namespace PcMonitor.Domain.Ports;
+
+public interface ISystemEventRepository
 {
-    internal class ISystemEventRepository
-    {
-    }
+    Task<IReadOnlyList<SystemEvent>> GetRangeAsync(TimeRange range, CancellationToken ct = default);
 }

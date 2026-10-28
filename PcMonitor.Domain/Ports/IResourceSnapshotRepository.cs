@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using PcMonitor.Domain.Entities;
+using PcMonitor.Domain.ValueObjects;
 
-namespace PcMonitor.Domain.Ports
+namespace PcMonitor.Domain.Ports;
+
+public interface IResourceSnapshotRepository
 {
-    internal class IResourceSnapshotRepository
-    {
-    }
+    Task AddAsync(ResourceSnapshot snapshot, CancellationToken ct = default);
+    Task<ResourceSnapshot?> GetByIdAsync(Guid id, CancellationToken ct = default);
+    Task<IReadOnlyList<ResourceSnapshot>> GetRangeAsync(TimeRange range, CancellationToken ct = default);
+    Task<int> CountAsync(TimeRange range, CancellationToken ct = default);
 }

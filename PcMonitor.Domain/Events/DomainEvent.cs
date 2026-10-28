@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace PcMonitor.Domain.Events;
 
-namespace PcMonitor.Domain.Events
-{
-    internal class DomainEvent
-    {
-    }
-}
+/// <summary>
+/// Базовый тип доменного события. Публикуется Application-слоем.
+/// Домен не хранит события в агрегате — это делает use case.
+/// </summary>
+public abstract record DomainEvent(DateTimeOffset OccurredAt);

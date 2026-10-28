@@ -1,12 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using PcMonitor.Domain.Enums;
+using PcMonitor.Domain.ValueObjects;
 
-namespace PcMonitor.Domain.Events
-{
-    internal class AnomalyDetected
-    {
-    }
-}
+namespace PcMonitor.Domain.Events;
+
+public sealed record AnomalyDetected(
+    MetricType Metric,
+    SeverityLevel Severity,
+    string Reason,
+    double ObservedValue,
+    ProcessIdentifier? Culprit,
+    DateTimeOffset OccurredAt) : DomainEvent(OccurredAt);

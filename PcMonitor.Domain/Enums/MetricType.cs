@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace PcMonitor.Domain.Enums;
 
-namespace PcMonitor.Domain.Enums
+public enum MetricType
 {
-    internal class MetricType
-    {
-    }
+    Cpu = 0,
+    Memory = 1,
+    DiskIo = 2,
+    Gpu = 3
 }

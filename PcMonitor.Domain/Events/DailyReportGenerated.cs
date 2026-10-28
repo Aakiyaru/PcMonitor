@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace PcMonitor.Domain.Events;
 
-namespace PcMonitor.Domain.Events
-{
-    internal class DailyReportGenerated
-    {
-    }
-}
+public sealed record DailyReportGenerated(
+    Guid ReportId,
+    DateOnly Date,
+    int AnomalyCount,
+    DateTimeOffset OccurredAt) : DomainEvent(OccurredAt);

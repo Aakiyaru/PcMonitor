@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using PcMonitor.Domain.ValueObjects;
 
-namespace PcMonitor.Domain.Events
-{
-    internal class SnapshotCollected
-    {
-    }
-}
+namespace PcMonitor.Domain.Events;
+
+public sealed record SnapshotCollected(
+    Guid SnapshotId,
+    DateTimeOffset CollectedAt,
+    CpuUsage Cpu,
+    MemoryUsage Memory) : DomainEvent(CollectedAt);

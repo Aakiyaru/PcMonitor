@@ -1,12 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using PcMonitor.Domain.Common;
 
-namespace PcMonitor.Domain.ValueObjects
+namespace PcMonitor.Domain.ValueObjects;
+
+public readonly record struct CpuUsage
 {
-    internal class CpuUsage
+    public double Percent { get; }
+
+    public CpuUsage(double percent)
     {
+        Guard.AgainstOutOfRange(percent, 0, 100, nameof(percent));
+        Percent = percent;
     }
+
+    public static CpuUsage Zero => new(0);
+
+    public bool Exceeds(double threshold) => Percent > threshold;
 }
