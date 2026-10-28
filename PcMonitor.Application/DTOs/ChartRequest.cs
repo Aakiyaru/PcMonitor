@@ -1,12 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace PcMonitor.Application.DTOs
+﻿namespace PcMonitor.Application.DTOs
 {
-    internal class ChartRequest
-    {
-    }
+    public enum ChartKind { Line, Bar, Pie }
+
+    public sealed record ChartRequest(
+        ChartKind Kind,
+        string Title,
+        IReadOnlyList<ChartSeries> Series,
+        string? YAxisLabel = null,
+        string? XAxisLabel = null);
+
+    public sealed record ChartSeries(
+        string Name,
+        IReadOnlyList<ChartPoint> Points,
+        string? Color = null);
+
+    public sealed record ChartPoint(double x, double y);
 }
