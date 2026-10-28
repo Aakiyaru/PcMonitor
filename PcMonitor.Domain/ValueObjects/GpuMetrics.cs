@@ -8,11 +8,11 @@ namespace PcMonitor.Domain.ValueObjects;
 /// </summary>
 public sealed record GpuMetrics
 {
-    public string DeviceName { get; }
-    public double UtilizationPercent { get; }
-    public double? TemperatureCelsius { get; }
-    public long? MemoryUsedBytes { get; }
-    public long? MemoryTotalBytes { get; }
+    public string DeviceName { get; init; }
+    public double UtilizationPercent { get; init; }
+    public double? TemperatureCelsius { get; init; }
+    public long? MemoryUsedBytes { get; init; }
+    public long? MemoryTotalBytes { get; init; }
 
     public GpuMetrics(
         string deviceName,

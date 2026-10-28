@@ -9,11 +9,11 @@ namespace PcMonitor.Domain.Entities;
 /// </summary>
 public sealed record TopConsumer
 {
-    public ProcessIdentifier Process { get; }
-    public MetricType Metric { get; }
-    public double AverageValue { get; }
-    public double PeakValue { get; }
-    public TimeSpan TotalObservedTime { get; }
+    public ProcessIdentifier Process { get; init; }
+    public MetricType Metric { get; init; }
+    public double AverageValue { get; init; }
+    public double PeakValue { get; init; }
+    public TimeSpan TotalObservedTime { get; init; }
 
     public TopConsumer(
         ProcessIdentifier process,

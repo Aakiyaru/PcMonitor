@@ -9,13 +9,13 @@ namespace PcMonitor.Domain.Entities;
 /// </summary>
 public sealed record Anomaly
 {
-    public DateTimeOffset OccurredAt { get; }
-    public MetricType Metric { get; }
-    public SeverityLevel Severity { get; }
-    public string Reason { get; }
-    public double ObservedValue { get; }
-    public double? Threshold { get; }
-    public ProcessIdentifier? Culprit { get; }
+    public DateTimeOffset OccurredAt { get; init; }
+    public MetricType Metric { get; init; }
+    public SeverityLevel Severity { get; init; }
+    public string Reason { get; init; }
+    public double ObservedValue { get; init; }
+    public double? Threshold { get; init; }
+    public ProcessIdentifier? Culprit { get; init; }
 
     public Anomaly(
         DateTimeOffset occurredAt,
