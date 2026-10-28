@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using PcMonitor.Domain.Entities;
 
 namespace PcMonitor.Application.Abstractions
 {
-    internal class ICollectorOrchestrator
+    public interface ICollectorOrchestrator
     {
+        Task<ResourceSnapshot> CollectAsync(CancellationToken ct = default);
     }
 }
