@@ -1,12 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using PcMonitor.Application.Abstractions;
+using PcMonitor.Domain.ValueObjects;
 
-namespace PcMonitor.Infrastructure.DataSources
+namespace PcMonitor.Infrastructure.DataSources;
+
+/// <summary>
+/// Fallback: используется, если LibreHardwareMonitor не может
+/// инициализироваться (нет прав, нет GPU, неподдерживаемая ОС).
+/// </summary>
+public sealed class NullGpuDataSource : IDataSource<GpuMetrics?>
 {
-    internal class NullGpuDataSource
-    {
-    }
+    public string Name => "gpu-null";
+    public GpuMetrics? Read() => null;
 }
