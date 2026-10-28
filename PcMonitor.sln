@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PcMonitor.Domain", "PcMonit
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PcMonitor.Application", "PcMonitor.Application\PcMonitor.Application.csproj", "{4F066D16-384E-480D-8530-9E9701131DFE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PcMonitor.Infrastructure", "PcMonitor.Infrastructure\PcMonitor.Infrastructure.csproj", "{E296CE9B-1B7A-4148-B47F-2C2A54E44821}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{4F066D16-384E-480D-8530-9E9701131DFE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4F066D16-384E-480D-8530-9E9701131DFE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4F066D16-384E-480D-8530-9E9701131DFE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E296CE9B-1B7A-4148-B47F-2C2A54E44821}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E296CE9B-1B7A-4148-B47F-2C2A54E44821}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E296CE9B-1B7A-4148-B47F-2C2A54E44821}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E296CE9B-1B7A-4148-B47F-2C2A54E44821}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
