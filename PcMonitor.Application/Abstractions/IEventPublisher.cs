@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using PcMonitor.Domain.Events;
 
 namespace PcMonitor.Application.Abstractions
 {
-    internal class IEventPublisher
+    public interface IEventPublisher
     {
+        Task PublishAsync<TEvent>(TEvent @event, CancellationToken ct = default)
+            where TEvent : DomainEvent;
     }
 }

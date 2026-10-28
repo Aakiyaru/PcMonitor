@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using PcMonitor.Application.DTOs;
 
 namespace PcMonitor.Application.Abstractions
 {
-    internal class IChartRender
+    public interface IChartRender
     {
+        byte[] Render(ChartRequest request);
     }
 }

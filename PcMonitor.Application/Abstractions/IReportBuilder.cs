@@ -1,12 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using PcMonitor.Domain.Entities;
 
 namespace PcMonitor.Application.Abstractions
 {
-    internal class IReportBuilder
+    public interface IReportBuilder
     {
+        Task<DailyReport> BuildAsync(
+            DateOnly date,
+            IReadOnlyList<ResourceSnapshot> snapshots,
+            IReadOnlyList<Anomaly> anomalies,
+            IReadOnlyList<TopConsumer> topConsumers,
+            CancellationToken ct = default);
     }
 }
