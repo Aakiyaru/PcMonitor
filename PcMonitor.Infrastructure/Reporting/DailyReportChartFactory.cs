@@ -17,7 +17,9 @@ public static class DailyReportChartFactory
             Title: "CPU за сутки",
             Series: new[] { new ChartSeries("CPU %", points, "#E74C3C") },
             XAxisLabel: "снимок",
-            YAxisLabel: "%");
+            YAxisLabel: "%",
+            YAxisMin: 0,          // ← фиксируем
+            YAxisMax: 100);       // ← фиксируем
     }
 
     public static ChartRequest MemoryTimeline(IReadOnlyList<ResourceSnapshot> snapshots)
@@ -31,11 +33,14 @@ public static class DailyReportChartFactory
             Title: "RAM за сутки",
             Series: new[] { new ChartSeries("RAM %", points, "#3498DB") },
             XAxisLabel: "снимок",
-            YAxisLabel: "%");
+            YAxisLabel: "%",
+            YAxisMin: 0,          // ← фиксируем
+            YAxisMax: 100);       // ← фиксируем
     }
 
     public static ChartRequest AnomaliesBySeverity(DailyReport report)
     {
+        // Bar chart — здесь ось Y = «количество», авто-масштаб разумнее фиксации.
         var series = new ChartSeries("Аномалии", new[]
         {
             new ChartPoint((double)SeverityLevel.Info,     report.Anomalies.Count(a => a.Severity == SeverityLevel.Info)),
