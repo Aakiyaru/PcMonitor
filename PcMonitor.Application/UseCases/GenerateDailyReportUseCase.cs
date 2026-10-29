@@ -73,7 +73,7 @@ namespace PcMonitor.Application.UseCases
             await _unitOfWork.SaveChangesAsync(ct);
 
             // 6. Экспортировать (PDF/HTML/email)
-            await _exporter.ExportAsync(report, ct);
+            await _exporter.ExportAsync(report, snapshots, ct);
 
             // 7. Опубликовать событие
             await _events.PublishAsync(

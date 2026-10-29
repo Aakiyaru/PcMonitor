@@ -4,6 +4,7 @@ using PcMonitor.Domain.Enums;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using Document = QuestPDF.Fluent.Document;
 
 namespace PcMonitor.Infrastructure.Reporting;
 
@@ -18,9 +19,20 @@ public sealed class PdfReportExporter : IReportExporter
         _outputDirectory = outputDirectory;
     }
 
-    public async Task ExportAsync(DailyReport report, CancellationToken ct = default)
+    public async Task ExportAsync(
+    DailyReport report,
+    IReadOnlyList<ResourceSnapshot> snapshots,
+    CancellationToken ct = default)
     {
         QuestPDF.Settings.License = LicenseType.Community;
+
+        // Pre-render графиков — до создания PDF-документа.
+        byte[]? cpuChart = snapshots.Count > 0
+            ? _charts.Render(DailyReportChartFactory.CpuTimeline(snapshots))
+            : null;
+        byte[]? memChart = snapshots.Count > 0
+            ? _charts.Render(DailyReportChartFactory.MemoryTimeline(snapshots))
+            : null;
 
         var pdfBytes = Document.Create(container =>
         {
@@ -35,22 +47,40 @@ public sealed class PdfReportExporter : IReportExporter
 
                 page.Content().Column(col =>
                 {
+                    // Счётчики
                     col.Item().Text($"Снимков проанализировано: {report.SnapshotsAnalyzed}");
                     col.Item().Text($"Критичных аномалий: {report.CriticalAnomalyCount}");
                     col.Item().Text($"Предупреждений: {report.WarningAnomalyCount}");
 
+                    // Графики
+                    if (cpuChart is not null)
+                    {
+                        col.Item().PaddingTop(15).Text("CPU за сутки:")
+                            .FontSize(14).Bold();
+                        col.Item().Image(cpuChart).FitWidth();
+                    }
+
+                    if (memChart is not null)
+                    {
+                        col.Item().PaddingTop(10).Text("RAM за сутки:")
+                            .FontSize(14).Bold();
+                        col.Item().Image(memChart).FitWidth();
+                    }
+
+                    // Топ-потребители
                     col.Item().PaddingTop(15).Text("Топ-потребители:")
                         .FontSize(14).Bold();
                     foreach (var top in report.TopConsumers)
                     {
                         col.Item().Text(
                             $"{top.Process} — ср. {FormatValue(top.Metric, top.AverageValue)}, " +
-                            $"пик {FormatValue(top.Metric, top.PeakValue)} ({MetricLabel(top.Metric)})");
+                            $"пик {FormatValue(top.Metric, top.PeakValue)} " +
+                            $"({MetricLabel(top.Metric)})");
                     }
 
+                    // Аномалии
                     col.Item().PaddingTop(15).Text("Аномалии:")
                         .FontSize(14).Bold();
-
                     if (report.Anomalies.Count == 0)
                     {
                         col.Item().Text("Аномалий не обнаружено.").Italic();
@@ -68,25 +98,10 @@ public sealed class PdfReportExporter : IReportExporter
             });
         }).GeneratePdf();
 
-        // Явная проверка: родительская папка существует и является папкой.
-        EnsureDirectoryIsUsable(_outputDirectory);
-
         var path = Path.Combine(_outputDirectory, $"report-{report.Date:yyyy-MM-dd}.pdf");
-
-        try
-        {
-            await File.WriteAllBytesAsync(path, pdfBytes, ct);
-            Console.WriteLine($"PDF written: {path} ({pdfBytes.Length:N0} bytes)");
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException(
-                $"Failed to write PDF to '{path}'. " +
-                $"Directory exists: {Directory.Exists(_outputDirectory)}. " +
-                $"Parent: '{Path.GetDirectoryName(_outputDirectory)}'. " +
-                $"Check if 'PcMonitor' in Documents is a file instead of a directory.",
-                ex);
-        }
+        Directory.CreateDirectory(_outputDirectory);
+        await File.WriteAllBytesAsync(path, pdfBytes, ct);
+        Console.WriteLine($"PDF written: {path} ({pdfBytes.Length:N0} bytes)");
     }
 
     /// <summary>

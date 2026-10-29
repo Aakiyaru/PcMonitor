@@ -20,6 +20,20 @@ public static class DailyReportChartFactory
             YAxisLabel: "%");
     }
 
+    public static ChartRequest MemoryTimeline(IReadOnlyList<ResourceSnapshot> snapshots)
+    {
+        var points = snapshots
+            .Select((s, i) => new ChartPoint(i, s.Memory.UtilizationPercent))
+            .ToArray();
+
+        return new ChartRequest(
+            Kind: ChartKind.Line,
+            Title: "RAM за сутки",
+            Series: new[] { new ChartSeries("RAM %", points, "#3498DB") },
+            XAxisLabel: "снимок",
+            YAxisLabel: "%");
+    }
+
     public static ChartRequest AnomaliesBySeverity(DailyReport report)
     {
         var series = new ChartSeries("Аномалии", new[]
