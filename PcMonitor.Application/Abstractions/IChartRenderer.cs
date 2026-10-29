@@ -2,7 +2,7 @@
 
 namespace PcMonitor.Application.Abstractions
 {
-    public interface IChartRender
+    public interface IChartRenderer
     {
         byte[] Render(ChartRequest request);
     }

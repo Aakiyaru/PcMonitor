@@ -24,7 +24,9 @@ public static class DependencyInjection
         // Cross-cutting
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IReportCalendar, LocalReportCalendar>();
-        services.AddSingleton<IEventPublisher, InMemoryEventPublisher>();
+        services.AddSingleton<InMemoryEventPublisher>();
+        services.AddSingleton<IEventPublisher>(
+            sp => sp.GetRequiredService<InMemoryEventPublisher>());
 
         // Data sources — singleton, держат состояние между тиками
         services.AddSingleton<IDataSource<CpuUsage>, PerformanceCounterCpuDataSource>();
@@ -57,7 +59,7 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
 
         // Reporting
-        services.AddSingleton<IChartRenderer, OxyPlotChartRenderer>();
+        services.AddSingleton<IChartRenderer, OxyPlotChartRendererer>();
         services.AddSingleton<IReportExporter>(sp =>
             new PdfReportExporter(
                 sp.GetRequiredService<IChartRenderer>(),

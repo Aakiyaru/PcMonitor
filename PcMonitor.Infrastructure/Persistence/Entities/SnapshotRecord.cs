@@ -1,6 +1,4 @@
-﻿using PcMonitor.Infrastructure.Persistance.Entities;
-
-namespace PcMonitor.Infrastructure.Persistence.Entities;
+﻿namespace PcMonitor.Infrastructure.Persistence.Entities;
 
 public sealed class SnapshotRecord
 {

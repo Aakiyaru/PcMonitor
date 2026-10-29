@@ -2,7 +2,7 @@
 using PcMonitor.Domain.Entities;
 using PcMonitor.Domain.Ports;
 using PcMonitor.Domain.ValueObjects;
-using PcMonitor.Infrastructure.Persistance.Mappings;
+using PcMonitor.Infrastructure.Persistence.Mappings;
 
 namespace PcMonitor.Infrastructure.Persistence.Repositories;
 

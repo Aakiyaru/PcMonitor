@@ -16,7 +16,7 @@ public static class TopConsumerCalculator
         int topN = 5)
     {
         ArgumentNullException.ThrowIfNull(snapshots);
-        if (topN <= 0) throw new ArgumentOutOfRangeException(nameof(topN));
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(topN);
 
         if (snapshots.Count == 0 || metric == MetricType.Gpu)
             return Array.Empty<TopConsumer>();

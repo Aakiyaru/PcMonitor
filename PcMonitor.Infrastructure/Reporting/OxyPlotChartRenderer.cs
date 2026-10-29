@@ -6,7 +6,7 @@ using PcMonitor.Application.DTOs;
 
 namespace PcMonitor.Infrastructure.Reporting;
 
-public sealed class OxyPlotChartRenderer : IChartRenderer
+public sealed class OxyPlotChartRendererer : IChartRenderer
 {
     public byte[] Render(ChartRequest request)
     {
@@ -23,13 +23,13 @@ public sealed class OxyPlotChartRenderer : IChartRenderer
                 case ChartKind.Line:
                     var line = new LineSeries { Title = series.Name };
                     foreach (var pt in series.Points)
-                        line.Points.Add(new DataPoint(pt.X, pt.Y));
+                        line.Points.Add(new DataPoint(pt.x, pt.y));
                     model.Series.Add(line);
                     break;
                 case ChartKind.Bar:
                     var bar = new BarSeries { Title = series.Name };
                     foreach (var pt in series.Points)
-                        bar.Items.Add(new BarItem(pt.Y));
+                        bar.Items.Add(new BarItem(pt.y));
                     model.Series.Add(bar);
                     break;
             }

@@ -1,19 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net9.0-windows</TargetFramework>
+	  <NoWarn>$(NoWarn);NETSDK1206</NoWarn>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.22" />
-    <PackageReference Include="OxyPlot.Core" Version="2.2.0" />
-    <PackageReference Include="OxyPlot.SkiaSharp" Version="2.2.0" />
-    <PackageReference Include="QuestPDF" Version="2026.9.1" />
-    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="9.0.22" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.*" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.*" />
+		<PackageReference Include="LibreHardwareMonitorLib" Version="0.9.*" />
+		<PackageReference Include="OxyPlot.Core" Version="2.1.*" />
+		<PackageReference Include="OxyPlot.SkiaSharp" Version="2.1.*" />
+		<PackageReference Include="QuestPDF" Version="2024.*" />
+		<PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="2.88.*" />
+		<PackageReference Include="System.Diagnostics.PerformanceCounter" Version="9.0.22" />
+	</ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\PcMonitor.Application\PcMonitor.Application.csproj" />

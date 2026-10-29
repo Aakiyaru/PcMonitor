@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Worker">
+	<PropertyGroup>
+		<TargetFramework>net9.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<OutputType>Exe</OutputType>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+		<UserSecretsId>pcm-onitor-worker-7f3a</UserSecretsId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.*" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.*" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.*" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.*">
+			<PrivateAssets>all</PrivateAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\PcMonitor.Application\PcMonitor.Application.csproj" />
+		<ProjectReference Include="..\PcMonitor.Domain\PcMonitor.Domain.csproj" />
+		<ProjectReference Include="..\PcMonitor.Infrastructure\PcMonitor.Infrastructure.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="appsettings.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+</Project>

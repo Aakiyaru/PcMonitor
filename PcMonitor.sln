@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PcMonitor.Application", "Pc
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PcMonitor.Infrastructure", "PcMonitor.Infrastructure\PcMonitor.Infrastructure.csproj", "{E296CE9B-1B7A-4148-B47F-2C2A54E44821}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PcMonitor.Presentation.Worker", "PcMonitro.Presentation.Worker\PcMonitor.Presentation.Worker.csproj", "{6F4CDFD1-3624-4848-AF5B-5D4FE699EF41}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{E296CE9B-1B7A-4148-B47F-2C2A54E44821}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E296CE9B-1B7A-4148-B47F-2C2A54E44821}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E296CE9B-1B7A-4148-B47F-2C2A54E44821}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F4CDFD1-3624-4848-AF5B-5D4FE699EF41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F4CDFD1-3624-4848-AF5B-5D4FE699EF41}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F4CDFD1-3624-4848-AF5B-5D4FE699EF41}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F4CDFD1-3624-4848-AF5B-5D4FE699EF41}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

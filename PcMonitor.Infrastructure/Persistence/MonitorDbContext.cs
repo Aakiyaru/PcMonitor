@@ -9,6 +9,8 @@ public sealed class MonitorDbContext : DbContext
     public DbSet<ProcessRecord> Processes => Set<ProcessRecord>();
     public DbSet<SystemEventRecord> SystemEvents => Set<SystemEventRecord>();
     public DbSet<DailyReportRecord> DailyReports => Set<DailyReportRecord>();
+    public DbSet<AnomalyRecord> Anomalies => Set<AnomalyRecord>();
+    public DbSet<TopConsumerRecord> TopConsumers => Set<TopConsumerRecord>();
 
     public MonitorDbContext(DbContextOptions<MonitorDbContext> options) : base(options) { }
 
@@ -19,6 +21,11 @@ public sealed class MonitorDbContext : DbContext
             e.ToTable("Snapshots");
             e.HasKey(x => x.Id);
             e.HasIndex(x => x.Timestamp);
+            e.Property(x => x.Timestamp)
+                .HasConversion(
+                    v => v.ToUnixTimeMilliseconds(),
+                    v => DateTimeOffset.FromUnixTimeMilliseconds(v))
+                .HasColumnType("INTEGER");
             e.HasMany(x => x.Processes)
              .WithOne(p => p.Snapshot)
              .HasForeignKey(p => p.SnapshotId)
@@ -38,6 +45,11 @@ public sealed class MonitorDbContext : DbContext
             e.ToTable("SystemEvents");
             e.HasKey(x => x.Id);
             e.HasIndex(x => x.Timestamp);   // GetRangeAsync фильтрует по нему
+            e.Property(x => x.Timestamp)
+                .HasConversion(
+                    v => v.ToUnixTimeMilliseconds(),
+                    v => DateTimeOffset.FromUnixTimeMilliseconds(v))
+                .HasColumnType("INTEGER");
             e.Property(x => x.Source).HasMaxLength(200).IsRequired();
             e.Property(x => x.Message).IsRequired();   // без ограничения — события длинные
             e.Property(x => x.Category).HasConversion<int>();
@@ -51,6 +63,12 @@ public sealed class MonitorDbContext : DbContext
 
             // Один отчёт на дату — иначе upsert в репозитории не имеет смысла.
             e.HasIndex(x => x.Date).IsUnique();
+
+            e.Property(x => x.GeneratedAt)
+                .HasConversion(
+                    v => v.ToUnixTimeMilliseconds(),
+                    v => DateTimeOffset.FromUnixTimeMilliseconds(v))
+                .HasColumnType("INTEGER");
 
             // DateOnly — нативно в EF Core 8. На EF Core 7 раскомментируйте:
             // e.Property(x => x.Date).HasConversion<DateOnlyConverter>();
@@ -72,6 +90,11 @@ public sealed class MonitorDbContext : DbContext
             e.HasKey(x => x.Id);
             e.HasIndex(x => x.DailyReportId);
             e.HasIndex(x => x.CulpritPid);       // «все аномалии для PID 1234»
+            e.Property(x => x.OccurredAt)
+                .HasConversion(
+                    v => v.ToUnixTimeMilliseconds(),
+                    v => DateTimeOffset.FromUnixTimeMilliseconds(v))
+                .HasColumnType("INTEGER");
             e.Property(x => x.Reason).IsRequired();
             e.Property(x => x.Metric).HasConversion<int>();
             e.Property(x => x.Severity).HasConversion<int>();

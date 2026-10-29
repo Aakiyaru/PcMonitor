@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PcMonitor.Domain.Entities;
 using PcMonitor.Domain.Ports;
-using PcMonitor.Infrastructure.Persistance.Mappings;
+using PcMonitor.Infrastructure.Persistence.Mappings;
 
 namespace PcMonitor.Infrastructure.Persistence.Repositories;
 
@@ -15,6 +15,7 @@ public sealed class SqliteDailyReportRepository : IDailyReportRepository
         var existing = await _db.DailyReports
             .Include(r => r.Anomalies)
             .Include(r => r.TopConsumers)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(r => r.Date == report.Date, ct);
 
         if (existing is null)
@@ -38,25 +39,28 @@ public sealed class SqliteDailyReportRepository : IDailyReportRepository
             existing.TopConsumers.Add(DomainMapper.TopConsumerRecord(t, existing.Id));
     }
 
-    public async Task<DailyReport?> GetAsync(DateOnly date, CancellationToken ct = default)
+    public async Task<DailyReport?> GetAsync(
+    DateOnly reportDate, CancellationToken ct = default)
     {
         var rec = await _db.DailyReports
             .AsNoTracking()
             .Include(r => r.Anomalies)
             .Include(r => r.TopConsumers)
-            .FirstOrDefaultAsync(r => r.Date == date, ct);
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(r => r.Date == reportDate, ct);
 
         return rec is null ? null : DomainMapper.ToDomain(rec);
     }
 
     public async Task<IReadOnlyList<DailyReport>> GetRangeAsync(
-        DateOnly from, DateOnly to, CancellationToken ct = default)
+        DateOnly fromDate, DateOnly toDate, CancellationToken ct = default)
     {
         var recs = await _db.DailyReports
             .AsNoTracking()
             .Include(r => r.Anomalies)
             .Include(r => r.TopConsumers)
-            .Where(r => r.Date >= from && r.Date <= to)
+            .AsSplitQuery()
+            .Where(r => r.Date >= fromDate && r.Date <= toDate)
             .OrderBy(r => r.Date)
             .ToListAsync(ct);
 
