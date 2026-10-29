@@ -1,8 +1,6 @@
 ﻿using LibreHardwareMonitor.Hardware;
 using PcMonitor.Application.Abstractions;
 using PcMonitor.Domain.ValueObjects;
-using System.Collections;
-
 namespace PcMonitor.Infrastructure.DataSources;
 
 public sealed class LibreHardwareMonitorGpuDataSource

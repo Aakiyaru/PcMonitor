@@ -1,12 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace PcMonitor.Infrastructure.Persistence.Entities;
 
-namespace PcMonitor.Infrastructure.Persistance.Entities
+public sealed class ProcessRecord
 {
-    internal class ProcessRecord
-    {
-    }
+    public long Id { get; set; }
+    public Guid SnapshotId { get; set; }
+    public int Pid { get; set; }
+    public string Name { get; set; } = null!;
+    public double CpuPercent { get; set; }
+    public long MemoryWorkingSetBytes { get; set; }
+    public long DiskReadBps { get; set; }
+    public long DiskWriteBps { get; set; }
+
+    public SnapshotRecord Snapshot { get; set; } = null!;
 }
