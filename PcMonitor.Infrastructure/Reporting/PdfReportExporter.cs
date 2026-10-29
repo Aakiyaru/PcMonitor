@@ -41,9 +41,17 @@ public sealed class PdfReportExporter : IReportExporter
                 page.Size(PageSizes.A4);
                 page.Margin(40);
 
-                page.Header()
-                    .Text($"Отчёт за {report.Date:yyyy-MM-dd}")
-                    .FontSize(20).Bold();
+                page.Header().Column(header =>
+                {
+                    header.Item().Text($"Отчёт за {report.Date:yyyy-MM-dd}")
+                        .FontSize(20).Bold();
+
+                    // Явно указываем часовой пояс, чтобы не было двусмысленности.
+                    var now = DateTimeOffset.UtcNow.ToLocalTime();
+                    header.Item().Text(
+                        $"Время указано в локальном часовом поясе (UTC{now.Offset:hh\\:mm})")
+                        .FontSize(9).FontColor(Colors.Grey.Darken1);
+                });
 
                 page.Content().Column(col =>
                 {
@@ -98,9 +106,40 @@ public sealed class PdfReportExporter : IReportExporter
                     {
                         foreach (var a in report.Anomalies.Take(20))
                         {
+                            // Время — в локальном поясе, с явным указанием UTC-offset.
+                            var localTime = a.OccurredAt.ToLocalTime();
+                            var offsetLabel = $"UTC{localTime.Offset:hh\\:mm}";
+
+                            // Виновник — если известен.
+                            var culpritText = a.Culprit is not null
+                                ? $" Виновник: {a.Culprit}."
+                                : " Виновник не определён.";
+
                             col.Item().Text(
-                                $"{a.OccurredAt:HH:mm:ss} [{SeverityLabel(a.Severity)}] " +
-                                $"{MetricLabel(a.Metric)}: {a.Reason}");
+                                $"{localTime:HH:mm:ss} [{SeverityLabel(a.Severity)}] " +
+                                $"{MetricLabel(a.Metric)}: {a.Reason}{culpritText}");
+
+                            // Контекст в момент аномалии — топ-3 процесса по той же метрике.
+                            var ctx = FindSnapshotAt(snapshots, a.OccurredAt);
+                            if (ctx is not null)
+                            {
+                                var top3 = GetTop3ForMetric(ctx, a.Metric);
+                                if (top3.Count > 0)
+                                {
+                                    col.Item().PaddingLeft(15).Text(
+                                        $"  Нагрузка в этот момент: CPU {ctx.Cpu.Percent:F1}%, " +
+                                        $"RAM {ctx.Memory.UtilizationPercent:F1}%, " +
+                                        $"диск {FormatBytes(ctx.DiskIo.TotalBytesPerSecond)}/с")
+                                        .Italic().FontSize(9);
+
+                                    foreach (var p in top3)
+                                    {
+                                        col.Item().PaddingLeft(25).Text(
+                                            $"• {p.Process} — {FormatValue(a.Metric, ExtractMetric(p, a.Metric))}")
+                                            .Italic().FontSize(9);
+                                    }
+                                }
+                            }
                         }
                     }
                 });
@@ -151,4 +190,64 @@ public sealed class PdfReportExporter : IReportExporter
             _ => $"{bytes} Б"
         };
     }
+
+    /// <summary>
+    /// Находит снимок, ближайший по времени к заданному моменту.
+    /// Линейный поиск — приемлемо, потому что вызывается для <20 аномалий
+    /// при <10 000 снимков за день.
+    /// </summary>
+    private static ResourceSnapshot? FindSnapshotAt(
+        IReadOnlyList<ResourceSnapshot> snapshots,
+        DateTimeOffset target)
+    {
+        if (snapshots.Count == 0) return null;
+
+        // Снимки отсортированы по Timestamp (это гарантирует репозиторий
+        // через OrderBy(s => s.Timestamp)). Используем бинарный поиск.
+        var lo = 0;
+        var hi = snapshots.Count - 1;
+        while (lo < hi)
+        {
+            var mid = (lo + hi) / 2;
+            if (snapshots[mid].Timestamp < target)
+                lo = mid + 1;
+            else
+                hi = mid;
+        }
+
+        // Ближайший — либо lo, либо lo-1.
+        var best = snapshots[lo];
+        if (lo > 0)
+        {
+            var prev = snapshots[lo - 1];
+            if (Math.Abs((prev.Timestamp - target).TotalSeconds)
+                < Math.Abs((best.Timestamp - target).TotalSeconds))
+                best = prev;
+        }
+        return best;
+    }
+
+    private static IReadOnlyList<ProcessSnapshot> GetTop3ForMetric(
+        ResourceSnapshot snapshot,
+        MetricType metric)
+    {
+        return metric switch
+        {
+            MetricType.Cpu => snapshot.Processes
+                .OrderByDescending(p => p.Cpu.Percent).Take(3).ToArray(),
+            MetricType.Memory => snapshot.Processes
+                .OrderByDescending(p => p.Memory.WorkingSetBytes).Take(3).ToArray(),
+            MetricType.DiskIo => snapshot.Processes
+                .OrderByDescending(p => p.DiskIo.TotalBytesPerSecond).Take(3).ToArray(),
+            _ => Array.Empty<ProcessSnapshot>()
+        };
+    }
+
+    private static double ExtractMetric(ProcessSnapshot p, MetricType metric) => metric switch
+    {
+        MetricType.Cpu => p.Cpu.Percent,
+        MetricType.Memory => p.Memory.WorkingSetBytes,
+        MetricType.DiskIo => p.DiskIo.TotalBytesPerSecond,
+        _ => 0
+    };
 }
