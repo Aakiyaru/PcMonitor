@@ -1,5 +1,6 @@
 ﻿using PcMonitor.Application.Abstractions;
 using PcMonitor.Domain.Entities;
+using PcMonitor.Domain.Enums;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -43,17 +44,25 @@ public sealed class PdfReportExporter : IReportExporter
                     foreach (var top in report.TopConsumers)
                     {
                         col.Item().Text(
-                            $"{top.Process} — ср. {top.AverageValue:F1}, " +
-                            $"пик {top.PeakValue:F1} ({top.Metric})");
+                            $"{top.Process} — ср. {FormatValue(top.Metric, top.AverageValue)}, " +
+                            $"пик {FormatValue(top.Metric, top.PeakValue)} ({MetricLabel(top.Metric)})");
                     }
 
                     col.Item().PaddingTop(15).Text("Аномалии:")
                         .FontSize(14).Bold();
-                    foreach (var a in report.Anomalies.Take(20))
+
+                    if (report.Anomalies.Count == 0)
                     {
-                        col.Item().Text(
-                            $"{a.OccurredAt:HH:mm:ss} [{a.Severity}] " +
-                            $"{a.Metric}: {a.Reason}");
+                        col.Item().Text("Аномалий не обнаружено.").Italic();
+                    }
+                    else
+                    {
+                        foreach (var a in report.Anomalies.Take(20))
+                        {
+                            col.Item().Text(
+                                $"{a.OccurredAt:HH:mm:ss} [{SeverityLabel(a.Severity)}] " +
+                                $"{MetricLabel(a.Metric)}: {a.Reason}");
+                        }
                     }
                 });
             });
@@ -118,5 +127,44 @@ public sealed class PdfReportExporter : IReportExporter
                 $"Parent may be a reparse point or file. " +
                 $"Check with: Get-Item '{Path.GetDirectoryName(path)}'.");
         }
+    }
+
+    // В PdfReportExporter.cs
+    private static string MetricLabel(MetricType m) => m switch
+    {
+        MetricType.Cpu => "CPU",
+        MetricType.Memory => "RAM",
+        MetricType.DiskIo => "Диск",
+        MetricType.Gpu => "GPU",
+        _ => m.ToString()
+    };
+
+    private static string SeverityLabel(SeverityLevel s) => s switch
+    {
+        SeverityLevel.Info => "Инфо",
+        SeverityLevel.Warning => "Внимание",
+        SeverityLevel.Critical => "Критично",
+        _ => s.ToString()
+    };
+
+    private static string FormatValue(MetricType metric, double value) => metric switch
+    {
+        MetricType.Cpu => $"{value:F1}%",
+        MetricType.Memory => $"{value:F1}%",
+        MetricType.Gpu => $"{value:F1}%",
+        MetricType.DiskIo => FormatBytes((long)value) + "/с",
+        _ => $"{value:F1}"
+    };
+
+    private static string FormatBytes(long bytes)
+    {
+        const long KB = 1024L, MB = KB * 1024, GB = MB * 1024;
+        return bytes switch
+        {
+            >= GB => $"{bytes / (double)GB:F1} ГБ",
+            >= MB => $"{bytes / (double)MB:F1} МБ",
+            >= KB => $"{bytes / (double)KB:F1} КБ",
+            _ => $"{bytes} Б"
+        };
     }
 }
