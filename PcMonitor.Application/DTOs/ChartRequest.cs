@@ -8,6 +8,7 @@
         IReadOnlyList<ChartSeries> Series,
         string? YAxisLabel = null,
         string? XAxisLabel = null);
+        
 
     public sealed record ChartSeries(
         string Name,

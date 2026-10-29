@@ -70,12 +70,21 @@ public sealed class PdfReportExporter : IReportExporter
                     // Топ-потребители
                     col.Item().PaddingTop(15).Text("Топ-потребители:")
                         .FontSize(14).Bold();
-                    foreach (var top in report.TopConsumers)
+
+                    foreach (var metric in new[] { MetricType.Cpu, MetricType.Memory, MetricType.DiskIo })
                     {
-                        col.Item().Text(
-                            $"{top.Process} — ср. {FormatValue(top.Metric, top.AverageValue)}, " +
-                            $"пик {FormatValue(top.Metric, top.PeakValue)} " +
-                            $"({MetricLabel(top.Metric)})");
+                        var tops = report.GetTopConsumers(metric);
+                        if (tops.Count == 0) continue;
+
+                        col.Item().PaddingTop(8).Text($"По {MetricLabel(metric)}:")
+                            .FontSize(12).Bold();
+
+                        foreach (var top in tops)
+                        {
+                            col.Item().Text(
+                                $"  {top.Process} — ср. {FormatValue(top.Metric, top.AverageValue)}, " +
+                                $"пик {FormatValue(top.Metric, top.PeakValue)}");
+                        }
                     }
 
                     // Аномалии
@@ -104,46 +113,6 @@ public sealed class PdfReportExporter : IReportExporter
         Console.WriteLine($"PDF written: {path} ({pdfBytes.Length:N0} bytes)");
     }
 
-    /// <summary>
-    /// Проверяет, что путь существует, является папкой, и создаёт его при необходимости.
-    /// Бросает осмысленное исключение, если родитель — файл или путь сломан.
-    /// </summary>
-    private static void EnsureDirectoryIsUsable(string path)
-    {
-        // Если путь уже существует, но это файл — CreateDirectory это молча «проглотит».
-        if (File.Exists(path) && !Directory.Exists(path))
-        {
-            throw new InvalidOperationException(
-                $"'{path}' exists as a FILE, not a directory. " +
-                $"Delete it manually or use a different output directory.");
-        }
-
-        if (!Directory.Exists(path))
-        {
-            try
-            {
-                Directory.CreateDirectory(path);
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException(
-                    $"Cannot create directory '{path}'. " +
-                    $"Parent '{Path.GetDirectoryName(path)}' " +
-                    $"(is file: {File.Exists(Path.GetDirectoryName(path))}).",
-                    ex);
-            }
-        }
-
-        // После CreateDirectory — проверяем реально.
-        if (!Directory.Exists(path))
-        {
-            throw new InvalidOperationException(
-                $"Directory '{path}' does not exist after CreateDirectory. " +
-                $"Parent may be a reparse point or file. " +
-                $"Check with: Get-Item '{Path.GetDirectoryName(path)}'.");
-        }
-    }
-
     // В PdfReportExporter.cs
     private static string MetricLabel(MetricType m) => m switch
     {
@@ -165,7 +134,7 @@ public sealed class PdfReportExporter : IReportExporter
     private static string FormatValue(MetricType metric, double value) => metric switch
     {
         MetricType.Cpu => $"{value:F1}%",
-        MetricType.Memory => $"{value:F1}%",
+        MetricType.Memory => FormatBytes((long)value),
         MetricType.Gpu => $"{value:F1}%",
         MetricType.DiskIo => FormatBytes((long)value) + "/с",
         _ => $"{value:F1}"

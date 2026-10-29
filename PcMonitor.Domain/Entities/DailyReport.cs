@@ -43,8 +43,12 @@ public sealed class DailyReport
             .ThenBy(a => a.OccurredAt)
             .ToList();
 
+        // Сортировка по метрике (CPU → RAM → Disk), затем по значению внутри метрики.
+        // AverageValue разных метрик — в разных единицах (%, %, байты/с) — 
+        // напрямую сравнивать их нельзя.
         _topConsumers = topConsumers
-            .OrderByDescending(t => t.AverageValue)
+            .OrderBy(t => t.Metric)
+            .ThenByDescending(t => t.AverageValue)
             .ToList();
 
         _anomaliesReadOnly = _anomalies.AsReadOnly();
@@ -61,4 +65,8 @@ public sealed class DailyReport
         .OrderByDescending(a => a.Severity)
         .ThenByDescending(a => a.ObservedValue)
         .FirstOrDefault();
+
+    /// <summary>Топ-потребители по конкретной метрике (уже отсортированные).</summary>
+    public IReadOnlyList<TopConsumer> GetTopConsumers(MetricType metric) =>
+        _topConsumers.Where(t => t.Metric == metric).ToArray();
 }

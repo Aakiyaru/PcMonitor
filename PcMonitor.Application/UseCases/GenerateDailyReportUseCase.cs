@@ -58,11 +58,15 @@ namespace PcMonitor.Application.UseCases
             var anomalies = await _pipeline.RunAsync(context, ct);
 
             // 3. Вычислить топ-потребителей (domain service)
-            var topConsumers = TopConsumerCalculator.Calculate(
-                snapshots,
-                MetricType.Cpu,
-                samplingInterval: TimeSpan.FromSeconds(10),
-                topN: 5);
+            var topConsumers = new List<TopConsumer>();
+            foreach (var metric in new[] { MetricType.Cpu, MetricType.Memory, MetricType.DiskIo })
+            {
+                topConsumers.AddRange(TopConsumerCalculator.Calculate(
+                    snapshots,
+                    metric,
+                    samplingInterval: TimeSpan.FromSeconds(10),
+                    topN: 5));
+            }
 
             // 4. Собрать отчёт (агрегат domain)
             var report = await _reportBuilder.BuildAsync(
