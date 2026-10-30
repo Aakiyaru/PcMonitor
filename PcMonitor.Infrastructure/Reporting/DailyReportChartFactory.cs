@@ -38,6 +38,27 @@ public static class DailyReportChartFactory
             YAxisMax: 100);       // ← фиксируем
     }
 
+    public static ChartRequest GpuTimeline(IReadOnlyList<ResourceSnapshot> snapshots)
+    {
+        // Сохраняем ОРИГИНАЛЬНЫЙ индекс снимка (i), а не индекс после Where.
+        // Это позволяет визуально совмещать CPU/RAM/GPU графики: точка №42
+        // означает один и тот же момент времени на всех трёх графиках.
+        var points = snapshots
+            .Select((s, i) => (Index: i, Gpu: s.Gpu))
+            .Where(x => x.Gpu is not null)
+            .Select(x => new ChartPoint(x.Index, x.Gpu!.UtilizationPercent))
+            .ToArray();
+
+        return new ChartRequest(
+            Kind: ChartKind.Line,
+            Title: "GPU за сутки",
+            Series: new[] { new ChartSeries("GPU %", points, "#27AE60") },
+            XAxisLabel: "снимок",
+            YAxisLabel: "%",
+            YAxisMin: 0,
+            YAxisMax: 100);
+    }
+
     public static ChartRequest AnomaliesBySeverity(DailyReport report)
     {
         // Bar chart — здесь ось Y = «количество», авто-масштаб разумнее фиксации.

@@ -33,6 +33,9 @@ public sealed class PdfReportExporter : IReportExporter
         byte[]? memChart = snapshots.Count > 0
             ? _charts.Render(DailyReportChartFactory.MemoryTimeline(snapshots))
             : null;
+        byte[]? gpuChart = snapshots.Any(s => s.Gpu is not null)
+            ? _charts.Render(DailyReportChartFactory.GpuTimeline(snapshots))
+            : null;
 
         var pdfBytes = Document.Create(container =>
         {
@@ -60,6 +63,12 @@ public sealed class PdfReportExporter : IReportExporter
                     col.Item().Text($"Критичных аномалий: {report.CriticalAnomalyCount}");
                     col.Item().Text($"Предупреждений: {report.WarningAnomalyCount}");
 
+                    var gpuSummary = BuildGpuSummary(snapshots);
+                    if (gpuSummary is not null)
+                    {
+                        col.Item().PaddingTop(4).Text(gpuSummary).FontSize(9).Italic();
+                    }
+
                     // Графики
                     if (cpuChart is not null)
                     {
@@ -73,6 +82,13 @@ public sealed class PdfReportExporter : IReportExporter
                         col.Item().PaddingTop(10).Text("RAM за сутки:")
                             .FontSize(14).Bold();
                         col.Item().Image(memChart).FitWidth();
+                    }
+
+                    if (gpuChart is not null)
+                    {
+                        col.Item().PaddingTop(10).Text("GPU за сутки:")
+                            .FontSize(14).Bold();
+                        col.Item().Image(gpuChart).FitWidth();
                     }
 
                     // Топ-потребители
@@ -250,4 +266,54 @@ public sealed class PdfReportExporter : IReportExporter
         MetricType.DiskIo => p.DiskIo.TotalBytesPerSecond,
         _ => 0
     };
+
+    /// <summary>
+    /// Сводка по GPU за период. null — если ни одного снимка с GPU не было
+    /// (Intel fallback, RDP-сессия, машина без дискретной карты).
+    /// </summary>
+    private static string? BuildGpuSummary(IReadOnlyList<ResourceSnapshot> snapshots)
+    {
+        var gpuSnapshots = snapshots.Where(s => s.Gpu is not null).ToList();
+        if (gpuSnapshots.Count == 0) return null;
+
+        var utils = gpuSnapshots.Select(s => s.Gpu!.UtilizationPercent).ToList();
+        var deviceName = gpuSnapshots[0].Gpu!.DeviceName;
+
+        var temps = gpuSnapshots
+            .Where(s => s.Gpu!.TemperatureCelsius.HasValue)
+            .Select(s => s.Gpu!.TemperatureCelsius!.Value)
+            .ToList();
+
+        var vrams = gpuSnapshots
+            .Where(s => s.Gpu!.MemoryUsedBytes.HasValue)
+            .Select(s => s.Gpu!.MemoryUsedBytes!.Value)
+            .ToList();
+
+        var parts = new List<string>
+    {
+        $"GPU: {deviceName}",
+        $"загрузка — ср. {utils.Average():F1}%, пик {utils.Max():F1}%"
+    };
+
+        if (temps.Count > 0)
+            parts.Add($"температура — ср. {temps.Average():F1}°C, макс. {temps.Max():F0}°C");
+        else
+            parts.Add("температура недоступна");
+
+        if (vrams.Count > 0)
+        {
+            var maxVram = vrams.Max();
+            var totalVram = gpuSnapshots
+                .Where(s => s.Gpu!.MemoryTotalBytes.HasValue)
+                .Select(s => s.Gpu!.MemoryTotalBytes!.Value)
+                .FirstOrDefault();
+
+            var vramText = $"VRAM пик — {FormatBytes(maxVram)}";
+            if (totalVram > 0)
+                vramText += $" из {FormatBytes(totalVram)}";
+            parts.Add(vramText);
+        }
+
+        return string.Join(" • ", parts) + ".";
+    }
 }

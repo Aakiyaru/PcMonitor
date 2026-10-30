@@ -10,12 +10,12 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.*" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.*" />
-		<PackageReference Include="LibreHardwareMonitorLib" Version="0.9.*" />
 		<PackageReference Include="OxyPlot.Core" Version="2.1.*" />
 		<PackageReference Include="OxyPlot.SkiaSharp" Version="2.1.*" />
 		<PackageReference Include="QuestPDF" Version="2024.*" />
 		<PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="2.88.*" />
 		<PackageReference Include="System.Diagnostics.PerformanceCounter" Version="9.0.22" />
+		<PackageReference Include="System.Management" Version="9.0.22" />
 	</ItemGroup>
 
   <ItemGroup>

@@ -41,6 +41,11 @@ public static class DependencyInjection
                 sp.GetRequiredService<MetricThresholds>(),
                 sp.GetRequiredService<SamplingOptions>().Interval));
 
+        services.AddScoped<IAnomalyAnalyzer>(sp =>
+            new GpuSpikeAnalyzer(
+                sp.GetRequiredService<MetricThresholds>(),
+                sp.GetRequiredService<SamplingOptions>().Interval));
+
         // Enrichers
         services.AddScoped<IAnomalyEnricher, EventCorrelationEnricher>();
 

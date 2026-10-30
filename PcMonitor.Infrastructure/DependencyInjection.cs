@@ -1,5 +1,4 @@
-﻿using LibreHardwareMonitor.Hardware;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PcMonitor.Application.Abstractions;
 using PcMonitor.Domain.Ports;
@@ -36,19 +35,7 @@ public static class DependencyInjection
             ProcessDataSource>();
 
         // GPU: пытаемся LHM, при провале (нет прав) — Null Object
-        services.AddSingleton<IDataSource<GpuMetrics?>>(sp =>
-        {
-            try
-            {
-                var lhm = new LibreHardwareMonitorGpuDataSource();
-                _ = lhm.Read();   // пробное чтение — упадёт, если нет драйвера
-                return lhm;
-            }
-            catch
-            {
-                return new NullGpuDataSource();
-            }
-        });
+        services.AddSingleton<IDataSource<GpuMetrics?>, CompositeGpuDataSource>();
 
         // Persistence
         services.AddDbContext<MonitorDbContext>(opt =>
