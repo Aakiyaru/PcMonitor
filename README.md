@@ -10,13 +10,15 @@
 [![C#](https://img.shields.io/badge/C%23-13-239120?logo=csharp&logoColor=white)](https://learn.microsoft.com/dotnet/csharp/)
 [![EF Core](https://img.shields.io/badge/EF%20Core-9.0-512BD4)](https://learn.microsoft.com/ef/core/)
 [![SQLite](https://img.shields.io/badge/SQLite-3-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
+[![NVIDIA NVML](https://img.shields.io/badge/NVIDIA-NVML-76B900?logo=nvidia&logoColor=white)](https://developer.nvidia.com/nvidia-management-library-nvml)
 
 [Возможности](#-возможности) •
 [Архитектура](#-архитектура) •
 [Установка](#-установка) •
 [Запуск](#-запуск) •
 [Конфигурация](#-конфигурация) •
-[Как это работает](#-как-это-работает)
+[Как это работает](#-как-это-работает) •
+[Ограничения](#️-ограничения)
 
 </div>
 
@@ -24,10 +26,11 @@
 
 ## 📖 О проекте
 
-**PC Monitor** — это фоновая служба для Windows, которая отслеживает использование системных ресурсов (**CPU**, **RAM**, **диск**, **GPU**) и сопоставляет нагрузку с конкретными процессами. Раз в сутки программа автоматически формирует **PDF-отчёт** с графиками, топ-потребителями и списком аномалий.
+**PC Monitor** — фоновая служба для Windows, которая отслеживает использование системных ресурсов (**CPU**, **RAM**, **диск**, **GPU**) и сопоставляет нагрузку с конкретными процессами. Раз в сутки программа автоматически формирует **PDF-отчёт** с графиками, топ-потребителями и списком аномалий.
 
 > [!TIP]
 > Проект построен по принципам **Clean Architecture** и **SOLID** — это не только рабочий инструмент, но и демонстрация того, как выглядит .NET-приложение с чистым разделением слоёв.
+
 ---
 
 ## ✨ Возможности
@@ -39,17 +42,20 @@
 ### 📊 Сбор метрик
 - Загрузка **CPU** каждые N секунд
 - Использование **RAM** (used / total)
-- Скорость **дискового I/O** (read / write)
-- **GPU-сенсоры**: утилизация, температура, VRAM
-- Полный список **процессов** с нагрузкой
+- Скорость **дискового I/O** (read / write), per-process
+- **GPU-телеметрия** без установки драйверов:
+  - NVIDIA → **NVML** (встроен в драйвер)
+  - Intel / AMD → Windows Performance Counters
+- Полный список **процессов** с нагрузкой на CPU/RAM/Disk/**GPU**
 
 </td>
 <td width="50%" valign="top">
 
 ### 🔍 Анализ
-- Эпизоды высокой нагрузки (**spikes**)
-- Устойчивое давление на память (**pressure**)
-- Дисковые всплески (**bursts**)
+- Эпизоды высокой загрузки **CPU** (с минимальной длительностью)
+- Устойчивое давление на **память**
+- Дисковые всплески **I/O**
+- Всплески **GPU utilization**
 - **Корреляция** с событиями ОС (антивирус, обновления, драйверы)
 
 </td>
@@ -58,19 +64,21 @@
 <td width="50%" valign="top">
 
 ### 📄 Отчётность
-- Ежедневный **PDF** с графиками
-- **Топ-5** потребителей по каждой метрике
-- Список аномалий с severity
-- CLI для генерации за любую дату
+- Ежедневный **PDF** с графиками CPU, RAM и GPU
+- **Сводка по GPU**: загрузка, температура, VRAM
+- **Топ-5** потребителей по каждой метрике (CPU / RAM / Диск / GPU)
+- Аномалии с виновником и контекстом (топ-3 процесса в момент аномалии)
+- Время **в локальном часовом поясе** с явным UTC-offset
 
 </td>
 <td width="50%" valign="top">
 
 ### 🏗️ Инфраструктура
-- Хранение истории в **SQLite**
+- Хранение истории в **SQLite** (EF Core)
 - Работа как **Windows Service**
-- **CLI-режим** для отладки
+- **CLI-режим** для генерации отчёта за любую дату
 - Конфигурация через `appsettings.json`
+- **Автоопределение вендора GPU** с приоритетом дискретной карты
 
 </td>
 </tr>
@@ -82,12 +90,16 @@
 
 | Слой | Технология |
 |---|---|
-| **Платформа** | .NET 9 (C# 13) |
-| **Domain** | Чистый C#, без зависимостей |
+| **Платформа** | .NET 9 (C# 13), Windows 10/11 |
+| **Domain** | Чистый C#, без внешних зависимостей |
 | **Application** | Use Cases, Strategy, Chain of Responsibility |
-| **Infrastructure** | EF Core 9, SQLite, LibreHardwareMonitorLib, OxyPlot, SkiaSharp, QuestPDF |
-| **System API** | `System.Diagnostics.PerformanceCounter`, `Event Log`, `P/Invoke` |
+| **Infrastructure** | EF Core 9, SQLite, OxyPlot + SkiaSharp, QuestPDF |
+| **GPU** | NVIDIA NVML (P/Invoke к `nvml.dll`), Windows Performance Counters |
+| **System API** | `System.Diagnostics.PerformanceCounter`, `System.Management` (WMI), `P/Invoke` |
 | **Hosting** | `Microsoft.Extensions.Hosting`, Worker Service |
+
+> [!NOTE]
+> **Нет внешних драйверов.** NVML поставляется вместе с драйвером NVIDIA; Performance Counters — часть Windows. Проект не требует установки PawnIO, WinRing0 или `LibreHardwareMonitor`.
 
 ---
 
@@ -103,7 +115,7 @@
                            │
 ┌──────────────────────────▼──────────────────────────────────┐
 │  PcMonitor.Infrastructure                                   │
-│  ─ PerformanceCounter, LHM, EF Core, OxyPlot, QuestPDF      │
+│  ─ PerformanceCounter, NVML, EF Core, OxyPlot, QuestPDF     │
 └──────────────────────────┬──────────────────────────────────┘
                            │
 ┌──────────────────────────▼──────────────────────────────────┐
@@ -117,7 +129,19 @@
 └─────────────────────────────────────────────────────────────┘
 ```
 
-> **Ключевое правило:** Domain не знает ни о чём снаружи. Никаких `using System.Diagnostics`, `using Microsoft.EntityFrameworkCore` — только чистые бизнес-правила. Всё остальное подключается через **порты** (интерфейсы).
+**GPU-подсистема** — отдельный пример применения Strategy:
+
+```
+CompositeGpuDataSource
+  ├── GpuVendorDetector (WMI → PNPDeviceID)
+  │     Приоритет: NVIDIA > AMD > Intel > Unknown
+  ├── NvidiaNvmlProvider        (NVML via P/Invoke)
+  ├── PerformanceCounterGpuProvider  (Intel / AMD / Unknown)
+  └── IGpuTelemetryProvider — общий интерфейс
+```
+
+Если провайдер вендора не инициализировался — `CompositeGpuDataSource` переключается на `PerformanceCounterGpuProvider` без падения.
+
 ---
 
 ## 📋 Требования
@@ -126,7 +150,10 @@
 |---|---|---|
 | **ОС** | Windows 10 / 11 | Linux и macOS не поддерживаются |
 | **.NET** | 9.0 SDK | Для сборки; для запуска достаточно Runtime |
-| **Права** | Администратор | Для `PerformanceCounter` и драйвера `LibreHardwareMonitor` |
+| **Права** | Администратор | Для `PerformanceCounter` (диск, часть процессов) |
+
+> [!IMPORTANT]
+> **NVML работает без прав администратора** — `nvml.dll` доступна процессу через стандартный поиск Windows. Права администратора нужны только для счётчиков производительности и чтения I/O системных процессов.
 
 ---
 
@@ -178,18 +205,33 @@ dotnet run --project PcMonitor.Presentation.Worker
 ### 🖥 Консольный режим (для отладки)
 
 ```powershell
-dotnet run --project PcMonitor.Presentation.Worker
+# ВАЖНО: для UAC-манифеста запускайте exe напрямую, не через dotnet run
+& ".\PcMonitor.Presentation.Worker\bin\Debug\net9.0-windows\PcMonitor.Presentation.Worker.exe"
 ```
 
-Работает в фоне, сбор идёт каждые **10 секунд**. Первый снимок появится через 10 секунд после старта. **Ctrl+C** — корректная остановка.
+Работает в фоне, сбор идёт каждые **10 секунд**. **Ctrl+C** — корректная остановка.
+
+**Ожидаемый вывод при старте:**
+
+```
+Reports directory: C:\Users\...\Documents\PcMonitor\Reports
+[GPU] Ignoring non-physical device: DameWare Development Mirror Driver 64-bit
+[GPU] Found NVIDIA (discrete, priority)
+[GPU] Detected vendor: Nvidia
+[GPU] NVML initialized: NVIDIA GeForce RTX 5070
+[GPU] Active provider: NVIDIA (NVML)
+info: Monitoring worker started, interval 00:00:10
+info: Daily report worker started, check interval 00:15:00
+info: Application started. Press Ctrl+C to shut down.
+```
 
 ### 📄 Ручная генерация отчёта
 
 ```powershell
-dotnet run --project PcMonitor.Presentation.Worker -- generate-report 2026-10-29
+dotnet run --project PcMonitor.Presentation.Worker -- generate-report 2026-10-30
 ```
 
-Генерирует PDF за указанную дату (формат `yyyy-MM-dd`) и сохраняет в папку отчётов. Полезно для проверки экспорта, не дожидаясь ночи.
+Генерирует PDF за указанную дату (формат `yyyy-MM-dd`) и сохраняет в папку отчётов.
 
 ### ⚙️ Windows Service
 
@@ -224,6 +266,7 @@ sc.exe start PcMonitor
     // Пороги CPU
     "CpuWarnPercent": 70,
     "CpuCriticalPercent": 90,
+    "CpuMinDurationSeconds": 30,
     
     // Пороги RAM
     "MemoryWarnPercent": 75,
@@ -272,7 +315,7 @@ PcMonitor/
 │   │
 │   ├── PcMonitor.Application/          ← use cases, анализаторы
 │   │   ├── Abstractions/
-│   │   ├── Analyzers/
+│   │   ├── Analyzers/                  ← CpuSpike, MemoryPressure, DiskBurst, GpuSpike
 │   │   ├── DTOs/
 │   │   ├── Services/
 │   │   └── UseCases/
@@ -280,8 +323,10 @@ PcMonitor/
 │   ├── PcMonitor.Infrastructure/       ← реализации портов
 │   │   ├── Calendar/
 │   │   ├── Clock/
-│   │   ├── DataSources/
+│   │   ├── DataSources/                ← CompositeGpuDataSource, ProcessDataSource
 │   │   ├── Events/
+│   │   ├── Gpu/                        ← NvmlNative, NvidiaNvmlProvider,
+│   │   │                                  PerformanceCounterGpuProvider, GpuVendorDetector
 │   │   ├── Persistence/
 │   │   └── Reporting/
 │   │
@@ -306,14 +351,16 @@ sequenceDiagram
     participant MW as MonitoringWorker
     participant UC as CollectSnapshotUseCase
     participant OR as CollectorOrchestrator
-    participant DS as DataSources (5 шт.)
+    participant GPU as CompositeGpuDataSource
+    participant DS as Other DataSources
     participant DB as SQLite
     
     loop каждые 10 секунд
         MW->>UC: ExecuteAsync()
         UC->>OR: CollectAsync()
-        OR->>DS: Read() × 5
-        DS-->>OR: CpuUsage, MemoryUsage, DiskIoRate, GpuMetrics?, ProcessSnapshot[]
+        OR->>GPU: Read() → NVML / PerfCounter
+        OR->>DS: Read() × 4
+        DS-->>OR: Cpu, Memory, Disk, Processes (with GPU%)
         OR-->>UC: ResourceSnapshot
         UC->>DB: INSERT Snapshots + Processes
     end
@@ -328,25 +375,21 @@ sequenceDiagram
     DW->>UC2: ExecuteAsync(yesterday)
     UC2->>DB: SELECT за день
     UC2->>AN: RunAsync(context)
-    AN-->>UC2: Anomaly[]
+    AN-->>UC2: Anomaly[] (CPU/RAM/Disk/GPU)
     UC2->>DB: INSERT DailyReports
     UC2->>EXP: ExportAsync(report, snapshots)
-    EXP-->>DW: PDF файл
+    EXP-->>DW: PDF с графиками и топами
 ```
 
 ### Пошагово
 
 1. **`MonitoringWorker`** каждые `N` секунд вызывает `CollectSnapshotUseCase`.
-2. **Use Case** через `CollectorOrchestrator` запрашивает данные у пяти источников: CPU, RAM, Disk, GPU, Processes.
-3. **Снимок** сохраняется в SQLite.
-4. **`DailyReportWorker`** раз в 15 минут проверяет: есть ли отчёт за вчера? Если нет — запускает генерацию.
-5. **`GenerateDailyReportUseCase`**:
-   - загружает снимки и системные события за день;
-   - прогоняет через `AnalysisPipeline`;
-   - вычисляет топ-потребителей;
-   - строит доменный агрегат `DailyReport`;
-   - сохраняет в БД;
-   - экспортирует в PDF.
+2. **Use Case** через `CollectorOrchestrator` запрашивает данные у пяти источников.
+3. **GPU-источник** (`CompositeGpuDataSource`) определяет вендора и выбирает провайдер.
+4. **`ProcessDataSource`** параллельно читает per-process GPU через `GPU Engine` counters (парсит PID из имени инстанса).
+5. **Снимок** сохраняется в SQLite.
+6. **`DailyReportWorker`** раз в 15 минут проверяет: есть ли отчёт за вчера?
+7. **`GenerateDailyReportUseCase`** прогоняет через `AnalysisPipeline`, строит топ по 4 метрикам, экспортирует PDF.
 
 ---
 
@@ -354,27 +397,64 @@ sequenceDiagram
 
 | Анализатор | Что находит | Минимальная длительность |
 |---|---|---|
-| **`CpuSpikeAnalyzer`** | Эпизоды устойчиво высокой загрузки CPU | 1 снимок |
+| **`CpuSpikeAnalyzer`** | Эпизоды устойчиво высокой загрузки CPU | 30 секунд |
 | **`MemoryPressureAnalyzer`** | Эпизоды высокого давления на RAM | 5 минут |
 | **`DiskBurstAnalyzer`** | Эпизоды интенсивного дискового I/O | 30 секунд |
+| **`GpuSpikeAnalyzer`** | Эпизоды высокой загрузки GPU | 30 секунд |
 | **`EventCorrelationEnricher`** | Обогащает аномалии контекстом из Event Log | — |
+
+**Пороги значимости** — чтобы не попадали «фантомные» процессы с нулевой нагрузкой:
+
+- CPU: ≥ 0.5%
+- RAM: ≥ 1 МБ
+- Disk: ≥ 10 КБ/с
+- GPU: ≥ 0.5%
+
+Если все процессы ниже порога — виновник остаётся **неопределённым**, и отчёт честно пишет: *«нагрузка, вероятно, от системных процессов (драйверы, прерывания)»*.
 
 ---
 
 ## ⚠️ Ограничения
 
-- 🔒 **Только Windows** — `PerformanceCounter`, `LibreHardwareMonitor`, `Event Log` являются Windows-only API.
-- 🎮 **GPU-мониторинг** работает не везде: Intel iGPU без температурных сенсоров, старые AMD без `memory-used`.
-- 🔑 **Права администратора** обязательны — без них GPU-мониторинг отключается (fallback на `NullGpuDataSource`), часть счётчиков возвращает нули.
-- 📅 **Отчёт только за вчера.** Пропущенные дни (когда ПК был выключен) не догоняются автоматически — используйте CLI с конкретной датой.
-- 🌐 **Локализация имён счётчиков** — `PerformanceCounter` всегда использует английские имена категорий («Processor», «Memory») независимо от локали Windows. Это внутренняя трансляция ОС, не нужно её «русифицировать».
+### 🔒 Платформа
+
+- **Только Windows.** `PerformanceCounter`, `System.Management`, `Event Log` — Windows-only API.
+- **Права администратора** нужны для `PerformanceCounter` (диск, часть процессов). NVML от прав **не зависит**.
+
+### 🎮 GPU
+
+| Сценарий | Что работает | Что не работает |
+|---|---|---|
+| **NVIDIA, локально** | Загрузка, температура, VRAM, per-process GPU% | — |
+| **NVIDIA, RDP** | Только имя устройства | Загрузка = 0, VRAM = 0 (см. ниже) |
+| **Intel / AMD, локально** | Загрузка GPU и per-process GPU% | Температура, VRAM |
+| **Intel / AMD, RDP** | Только имя устройства | Загрузка = 0 |
+
+> [!CAUTION]
+> **RDP / удалённые сессии.** Когда вы подключены через RDP, DameWare или аналогичный инструмент, Windows **обходит физический GPU** — рендеринг идёт на клиенте. `nvmlDeviceGetUtilizationRates` и `GPU Engine` counters возвращают **0%**. Это физическое ограничение, а не баг проекта. Для реальных данных нужно **локальное подключение** к машине (физический монитор).
+
+> [!NOTE]
+> **AMD в v1.** Работает через универсальный fallback (Windows Performance Counters). Температура и VRAM недоступны — потребуется ADLX SDK (см. Roadmap).
+
+> [!NOTE]
+> **Intel в v1.** Аналогично AMD — только utilization через Performance Counters. Температура и VRAM — потребуется IGCL SDK (см. Roadmap).
+
+### 🖥 Системные процессы
+
+`System (4)`, `Secure System`, `Registry`, `smss`, `csrss` — **всегда 0 Б/с**, потому что Windows не позволяет открыть их даже администратору. Для получения их I/O нужен **ETW** — отдельный уровень сложности.
+
+### 📅 Пропущенные дни
+
+`DailyReportWorker` генерирует отчёт только за **вчера**. Пропущенные дни (когда ПК был выключен) не догоняются автоматически — используйте CLI с конкретной датой.
 
 ---
 
 ## 🗺 Планы развития
 
 - [ ] **WPF-дашборд** для просмотра данных в реальном времени
-- [ ] **GPU и Disk I/O** графики в отчётах (сейчас только CPU и RAM)
+- [ ] **VRAM-график** и **температурный график** GPU в отчётах
+- [ ] **Intel IGCL** — полная телеметрия Intel iGPU (температура, VRAM)
+- [ ] **AMD ADLX** — полная телеметрия AMD GPU
 - [ ] **Агрегация топ-потребителей по имени** процесса (сейчас по PID)
 - [ ] **Экспорт в HTML** в дополнение к PDF
 - [ ] **Уведомления в Telegram** при критических аномалиях
@@ -406,7 +486,5 @@ dotnet format --verify-no-changes
 <div align="center">
 
 **[⬆ Наверх](#️-pc-monitor)**
-
-Сделано с ❤️ и .NET 9
 
 </div>
